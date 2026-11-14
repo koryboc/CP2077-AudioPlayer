@@ -1,0 +1,39 @@
+#pragma once
+
+#include "winres.h"
+
+#define VER_FILEVERSION             2,5,0,0
+#define VER_FILEVERSION_STR         "2.5.0\0"
+#define VER_PRODUCTVERSION          2,5,0,0
+#define VER_PRODUCTVERSION_STR      "2.5.0\0"
+
+LANGUAGE LANG_ENGLISH, SUBLANG_ENGLISH_US
+
+VS_VERSION_INFO VERSIONINFO
+ FILEVERSION     VER_FILEVERSION
+ PRODUCTVERSION  VER_PRODUCTVERSION
+ FILEFLAGSMASK   0x3fL
+ FILEFLAGS       0x0L
+ FILEOS          0x40004L
+ FILETYPE        0x2L
+ FILESUBTYPE     0x0L
+BEGIN
+  BLOCK "StringFileInfo"
+  BEGIN
+    BLOCK "040904b0"
+    BEGIN
+      VALUE "CompanyName", L"Roy Bock\0"
+      VALUE "FileDescription", "AudioPlayer RED4ext plugin\0"
+      VALUE "FileVersion", VER_FILEVERSION_STR
+      VALUE "InternalName", "AudioPlayer\0"
+      VALUE "LegalCopyright", L"Copyright \x00AE Roy Bock 2026\0"
+      VALUE "OriginalFilename", "AudioPlayer.dll\0"
+      VALUE "ProductName", "AudioPlayer\0"
+      VALUE "ProductVersion", VER_PRODUCTVERSION_STR
+    END
+  END
+  BLOCK "VarFileInfo"
+  BEGIN
+    VALUE "Translation", 0x0409, 1200
+  END
+END
