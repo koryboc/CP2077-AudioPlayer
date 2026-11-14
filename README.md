@@ -191,4 +191,4 @@ Key entries:
 
 ## Credits
 
-Huge thanks to [**keanuWheeze**](https://github.com/keanuWheeze) and the [CP77_radioExt](https://github.com/keanuWheeze/CP77_radioExt) project — a great help for understanding how to drive **FMOD Core** from a RED4ext plugin and a solid reference point while building this independent, pared-down base from scratch.
+Huge thanks to [**keanuWheeze**](https://github.com/justarandomguyintheinternet) and the [CP77_radioExt](https://github.com/justarandomguyintheinternet/CP77_radioExt) project — a great help for understanding how to drive **FMOD Core** from a RED4ext plugin and a solid reference point while building this independent, pared-down base from scratch.
