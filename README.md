@@ -124,10 +124,63 @@ git submodule update --init --recursive
 ./patch-submodule.sh   # fix RTTI case-sensitivity in RED4ext.SDK
 ```
 
-Provide FMOD — pick one:
-- `cp -r /path/to/FMOD/api/core deps/fmod`
-- or `export FMOD_DIR=/path/to/FMOD/api/core`
-- or `cmake -DFMOD_DIR=... ...`
+### Obtain the FMOD Core API
+
+FMOD is closed-source and not redistributable in binary form inside this repo. You have to fetch the Windows **FMOD Engine** yourself (free for non-commercial / small-budget use).
+
+1. **Create an FMOD account** at [https://www.fmod.com/profile/register](https://www.fmod.com/profile/register) and confirm your email.
+2. **Log in** and open the download portal: [https://www.fmod.com/download](https://www.fmod.com/download).
+3. In the "**FMOD Engine**" section, select **Windows** as the platform and download the installer. The file is named along the lines of `fmodstudioapi20400win-installer.exe` (the `20400` part encodes the version).
+4. You do **not** need to execute the installer — it's a self-extracting archive. Open it with any archive tool (7-Zip, WinRAR, `7z x` on Linux) and extract it somewhere, e.g. `~/fmod/`.
+
+The extracted tree contains an `api/core/` directory that looks like this:
+
+```
+api/core/
+  inc/
+    fmod.hpp
+    fmod.h
+    fmod_errors.h
+    ...
+  lib/
+    x64/
+      fmod_vc.lib
+      fmod.dll
+      ...
+```
+
+Only `api/core/` is needed. Everything else (FMOD Studio, docs, examples) can be ignored.
+
+### Wire FMOD into the build
+
+Place the API where the build system can find it. Three equivalent options:
+
+**Option A — drop it into `deps/` (recommended, self-contained):**
+```bash
+# Copy just the contents of api/core into deps/fmod
+cp -r ~/fmod/api/core/. deps/fmod/
+
+# Resulting layout:
+# deps/fmod/inc/fmod.hpp
+# deps/fmod/lib/x64/fmod_vc.lib
+# deps/fmod/lib/x64/fmod.dll
+```
+
+**Option B — environment variable:**
+```bash
+export FMOD_DIR=~/fmod/api/core
+./build.sh
+```
+
+**Option C — CMake cache variable (one-shot):**
+```bash
+cmake -B build -DFMOD_DIR=~/fmod/api/core ...
+```
+
+Regardless of the option chosen, CMake resolves:
+- `fmod.hpp` from `${FMOD_DIR}/inc`
+- `fmod_vc.lib` from `${FMOD_DIR}/lib/x64` (linked against)
+- `fmod.dll` from `${FMOD_DIR}/lib/x64` (copied next to `AudioPlayer.dll` as a post-build step)
 
 ### Build (Linux cross-compile)
 ```bash
