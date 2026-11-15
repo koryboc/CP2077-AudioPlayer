@@ -43,7 +43,22 @@ if(FMOD_RUNTIME_LIBRARY)
   set_target_properties(FMOD::Core PROPERTIES IMPORTED_LOCATION "${FMOD_RUNTIME_LIBRARY}")
 endif()
 
+# Regenerate the REDscript declaration from main.cpp on every build so the
+# .reds stays in sync with the registered RTTI signatures.
+find_package(Python3 COMPONENTS Interpreter REQUIRED)
+set(_reds_out "${CMAKE_SOURCE_DIR}/bin/r6/scripts/AudioPlayer/AudioPlayer.reds")
+set(_reds_src "${CMAKE_SOURCE_DIR}/src/red4ext/main.cpp")
+set(_reds_gen "${CMAKE_SOURCE_DIR}/scripts/gen_reds.py")
+add_custom_command(
+  OUTPUT "${_reds_out}"
+  COMMAND ${Python3_EXECUTABLE} "${_reds_gen}" "${_reds_src}" "${_reds_out}"
+  DEPENDS "${_reds_src}" "${_reds_gen}"
+  COMMENT "Generating AudioPlayer.reds from main.cpp"
+  VERBATIM)
+add_custom_target(AudioPlayer_reds ALL DEPENDS "${_reds_out}")
+
 add_library(AudioPlayer SHARED src/red4ext/main.cpp)
+add_dependencies(AudioPlayer AudioPlayer_reds)
 
 if(WIN32)
   target_sources(AudioPlayer PRIVATE ${CMAKE_SOURCE_DIR}/src/red4ext/version.rc)
