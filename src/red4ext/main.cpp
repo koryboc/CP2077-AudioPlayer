@@ -261,15 +261,44 @@ namespace
         return ms;
     }
 
+    /// Expand supported `%var%` prefixes to their directory equivalents,
+    /// relative to the game bin directory. Unknown tokens are left intact.
+    std::string ExpandVars(const char* utf8Path)
+    {
+        std::string s(utf8Path);
+        struct { const char* token; const char* replacement; } kVars[] = {
+            {"%cet%",  "plugins\\cyber_engine_tweaks\\mods"},
+            {"%game%", "..\\.."},
+            {"%r6%",   "..\\..\\r6"},
+        };
+        for (const auto& v : kVars)
+        {
+            const auto n = std::char_traits<char>::length(v.token);
+            if (s.rfind(v.token, 0) == 0)
+            {
+                s.replace(0, n, v.replacement);
+                break;
+            }
+        }
+        return s;
+    }
+
+    /// Join a (possibly `%var%`-prefixed) script path against the game bin
+    /// directory.
+    std::string JoinBin(const char* utf8Path)
+    {
+        const auto expanded = ExpandVars(utf8Path);
+        return PathToUtf8(g_binDir / PathFromUtf8(expanded.c_str()));
+    }
+
     /// Resolve a script-provided path. `startPos == -1` marks the input as a
     /// stream URL and is passed through verbatim; everything else is joined
-    /// against the game bin directory.
+    /// against the game bin directory (after `%var%` expansion).
     std::string ResolveTarget(const CString& scriptPath, int32_t startPos)
     {
         if (startPos == -1)
             return scriptPath.c_str();
-        const auto rel = PathFromUtf8(scriptPath.c_str());
-        return PathToUtf8(g_binDir / rel);
+        return JoinBin(scriptPath.c_str());
     }
 
     /// Core: queue an async stream for playback on the given channel.
@@ -331,7 +360,7 @@ namespace
         GetParameter(frame, &path);
         frame->code++;
 
-        const auto target = PathToUtf8(g_binDir / PathFromUtf8(path.c_str()));
+        const auto target = JoinBin(path.c_str());
         const uint32_t ms = FetchLength(target.c_str());
         if (out)
             *out = static_cast<int32_t>(ms);
