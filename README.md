@@ -41,7 +41,7 @@ public native class AudioPlayer extends IScriptable {
 Semantics:
 - **Play**:
   - `channelID`: target slot in `[0, 63]`, or `-1` for the preview channel.
-  - `path`: absolute or CET-relative file path.
+  - `path`: file path (see **Path resolution** below). If `startPos` is `-1`, the string is passed through as a stream URL instead.
   - `startPos`: start offset in **milliseconds** (`0` = from start).
   - `volume`: linear gain, `1.0` = 100%.
   - `fade`: fade-in duration in **seconds** before reaching the target volume; `0` disables the fade.
@@ -54,20 +54,64 @@ Semantics:
 
 REDscript examples:
 ```julia
-let ms: Int32 = AudioPlayer.GetSongLength("plugins\\cyber_engine_tweaks\\mods\\Synthrace\\music\\#Default\\track.mp3");
-AudioPlayer.Play(0, "plugins\\...\\track.mp3", 0, 0.7, 0.5);
+let ms: Int32 = AudioPlayer.GetSongLength("%r6%\\audioware\\MyMod\\track.mp3");
+AudioPlayer.Play(0, "%r6%\\audioware\\track.mp3", 0, 0.7, 0.5);
 AudioPlayer.SetVolume(-1, 0.0); // mute all
 AudioPlayer.Stop(-1);           // stop all
 ```
 
 CET (Lua) example:
 ```lua
-local path = "plugins\\cyber_engine_tweaks\\mods\\MyMod\\track.mp3"
+local path = "%cet%\\MyMod\\track.mp3"
 local length = AudioPlayer.GetSongLength(path)
 if length > 0 then
     AudioPlayer.Play(-1, path, 0, 0.7, 0.5)
 end
 ```
+
+---
+
+## Path resolution
+
+All paths given to `GetSongLength` and `Play` are **relative to the directory that contains `Cyberpunk2077.exe`** — i.e. `<Cyberpunk 2077>\bin\x64\`, **not** the game root. This matters for every relative path you write:
+
+- `plugins\cyber_engine_tweaks\mods\<YourMod>\<file.mp3>` resolves to
+  ```
+  <Cyberpunk 2077>\bin\x64\plugins\cyber_engine_tweaks\mods\<YourMod>\<file.mp3>
+  ```
+- `..\..\r6\audioware\<YourMod>\<file.mp3>` climbs out of `bin\x64\` and resolves to
+  ```
+  <Cyberpunk 2077>\r6\audioware\<YourMod>\<file.mp3>
+  ```
+- `..\..\mods\<YourMod>\<file.mp3>` resolves to
+  ```
+  <Cyberpunk 2077>\mods\<YourMod>\<file.mp3>
+  ```
+
+If this feels fragile, use the **path variables** below — they produce the same final locations without the `..\..` gymnastics.
+
+### Path variables
+
+As a convenience, paths may start with one of the following tokens. The token is expanded before the bin-directory join, so the final location is well-defined regardless of where the game is installed.
+
+| Token    | Expands to                                              | Final location (example)                                               |
+| -------- | ------------------------------------------------------- | ---------------------------------------------------------------------- |
+| `%game%` | `..\..`                                                 | `<Cyberpunk 2077>\`                                                    |
+| `%cet%`  | `plugins\cyber_engine_tweaks\mods`                      | `<Cyberpunk 2077>\bin\x64\plugins\cyber_engine_tweaks\mods\`           |
+| `%r6%`   | `..\..\r6`                                              | `<Cyberpunk 2077>\r6\`                                                 |
+
+Example:
+```julia
+AudioPlayer.Play(0, "%cet%\\MyMod\\track.mp3", 0, 1.0, 0.0);
+AudioPlayer.Play(1, "%r6%\\audioware\\MyMod\\intro.ogg", 0, 1.0, 0.0);
+AudioPlayer.Play(2, "%game%\\mods\\MyMod\\sfx.wav", 0, 1.0, 0.0);
+```
+
+Only a token at the **start** of the path is recognized; unknown tokens are passed through unchanged.
+
+### Stream URLs
+
+As a special case in `Play`, passing `startPos = -1` marks `path` as a **stream URL** and skips the bin-directory join. The string is handed to FMOD verbatim — no `%var%` expansion. Use this for `http://` / `https://` sources. `GetSongLength` does not support URLs.
 
 ---
 
